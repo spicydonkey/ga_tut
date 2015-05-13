@@ -60,11 +60,11 @@ int main (void)
 	//return 0;
 	////????????????????????????????????????
 
-	int dim;
-	std::cout << "Enter the dimension please: ";
+	//// ask user for the Schwefel function dimension
+	//int dim;
+	//std::cout << "Enter the dimension please: ";
 	//std::cin >> dim;
-	dim = DIM;		// RUN many simulations with this dimension
-
+	////
 
 	// Seed the RNG outside run loop
 	std::srand((int)time(NULL));	
@@ -125,7 +125,7 @@ int main (void)
 			//if (i_chrom%((int)(POP_SIZE/5)) == 0)	{if (pop_chrom[i_chrom].paramvect != nullptr) {std::cout << "ERROR\n";} }
 			////DEBUGEND
 
-			pop_chrom[i_chrom].paramvect = new (std::nothrow) float[dim];
+			pop_chrom[i_chrom].paramvect = new (std::nothrow) float[DIM];
 			pop_chrom[i_chrom].fitness = 0.0f;
 
 			////-------------------debug TIME (9.35) DATE (130515)
@@ -143,7 +143,7 @@ int main (void)
 			// memory allocation successful
 			// random initialisation of chromosomes
 			float ran_gene;		
-			for (i_param=0; i_param<dim; i_param++) 
+			for (i_param=0; i_param<DIM; i_param++) 
 			{
 				ran_gene = (1000*RAN_NUM - 500);	// scale to the domain of the Schwefel function
 				pop_chrom[i_chrom].paramvect[i_param] = ran_gene;
@@ -188,7 +188,7 @@ int main (void)
 			///////////////////////
 			//// DEBUG MAIN
 			//std::cout << "DEBUG POINT printChromo" << "\n";
-			//printChromo(pop_chrom[0], dim);
+			//printChromo(pop_chrom[0], DIM);
 			////
 			///////////////////////
 
@@ -196,7 +196,7 @@ int main (void)
 		
 			for (i_chrom=0; i_chrom<POP_SIZE; i_chrom++) 
 			{
-				pop_chrom[i_chrom].fitness = GetFitness(pop_chrom[i_chrom].paramvect, dim);		// call fitness function and assign it to the chromosome object
+				pop_chrom[i_chrom].fitness = GetFitness(pop_chrom[i_chrom].paramvect, DIM);		// call fitness function and assign it to the chromosome object
 			
 				////-------------------debug TIME (9.46) DATE (130515)
 				//if (i_chrom%(POP_SIZE/5) == 0)
@@ -263,8 +263,8 @@ int main (void)
 			////-------------------
 
 			float *tmp_chrom1, *tmp_chrom2;	// temporary float-array chromosomes
-			tmp_chrom1 = new (std::nothrow) float[dim];
-			tmp_chrom2 = new (std::nothrow) float[dim];
+			tmp_chrom1 = new (std::nothrow) float[DIM];
+			tmp_chrom2 = new (std::nothrow) float[DIM];
 
 			// Creation of next generation population
 			// SELECTION, CROSSOVER, MUTATION
@@ -287,7 +287,7 @@ int main (void)
 				//std::cout << "CROSSOVER THE SAME CHROMOSOMES...\n";
 
 				// CROSSOVER
-				crossover(tmp_chrom1, tmp_chrom2, dim);
+				crossover(tmp_chrom1, tmp_chrom2, DIM);
 
 				//std::cout << "DONE!\n";
 				////
@@ -298,8 +298,8 @@ int main (void)
 				////-------------------
 
 				// MUTATION
-				mutate(tmp_chrom1, dim);
-				mutate(tmp_chrom2, dim);
+				mutate(tmp_chrom1, DIM);
+				mutate(tmp_chrom2, DIM);
 
 				////-------------------debug TIME (10.05) DATE (130515)
 				//std::cout << "MUTA pass\n";
@@ -344,7 +344,7 @@ int main (void)
 			// Display: Generations ran, the global minimum (arg1, arg2, ... , arg_dim), Schwefel fun value at global minimum (=0)
 			std::cout << "----GLOBAL MINIMUM FOUND----\n";
 			std::cout << gen << " generations\t|\t";
-			printChromo(pop_chrom[ind_globalmin],dim);
+			printChromo(pop_chrom[ind_globalmin],DIM);
 
 			std::cout << "\n run: " << run << "\n";
 			return 0;
@@ -392,7 +392,7 @@ int main (void)
 			///////////////////////
 
 			std::cout << MAX_GEN << " generations\t|\t";
-			printChromo(pop_chrom[ind_min], dim);
+			printChromo(pop_chrom[ind_min], DIM);
 
 			// Check for fittest chromosome throughout simulation
 			if (maxFitness > best_chrom.fitness) 
@@ -417,7 +417,7 @@ int main (void)
 
 	// Display best chromosome from all the runs
 	std::cout << "\n\n-----------\n" << "Best run: " << best_run << "\n\n";
-	printChromo(best_chrom, dim);
+	printChromo(best_chrom, DIM);
 
 	return 0;
 }
