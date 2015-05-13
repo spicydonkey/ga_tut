@@ -3,7 +3,7 @@
 
 float schwefel (float *argv, int dim)
 {
-	float value = 418.9829f*dim;
+	float value = 418.9829f*(float)dim;
 	for (int i=0; i<dim; i++)
 	{
 		value -= argv[i]*sin(sqrt(fabs(argv[i])));
