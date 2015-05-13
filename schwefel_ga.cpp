@@ -23,13 +23,13 @@ commands for debugging follow the format:
 #include <algorithm>
 
 // CONSTANTS
-#define POP_SIZE	100		// even
+#define POP_SIZE	40		// even
 #define RAN_NUM		((float)rand()/(RAND_MAX))		// a random number between 0 and 1
-#define MAX_GEN		500
-#define PROB_X		0.7		// crossover rate
-#define PROB_MUT	0.001	// mutation rate
+#define MAX_GEN		30
+#define PROB_X		0.4		// crossover rate
+#define PROB_MUT	0.1	// mutation rate
 #define EPSILON		1e-3	// precision of float in our case
-#define RUN			100		// number of GA simulations run (until global min found)
+#define RUN			10000		// number of GA simulations run (until global min found)
 #define DIM			2		// dimension of Schwefel function
 #define Nbin		100	// number of bins to store randomly generated numbers
 
@@ -154,7 +154,7 @@ int main (void)
 
 				////DEBUG
 				// check if the randomly assigned number does fall within [-500,500]
-				if (fabs(ran_gene) > 500.0f) {std::cout << "ERROR: RNG fail [-500,500]: " << ran_gene << "\n";}
+				if (fabs(ran_gene) > 500.0f) {std::cout << "ERROR: RNG fail [-500,500]: " << ran_gene << "\n"; return 1;}
 
 				//if (i_chrom%((int)(POP_SIZE/5)) == 0)	{std::cout << pop_chrom[i_chrom].paramvect[i_param] << ", ";}
 				////DEBUGEND
@@ -375,7 +375,7 @@ int main (void)
 					maxFitness = pop_chrom[i_chrom].fitness;
 					ind_min = i_chrom;
 
-					if (ind_min != 0)
+					if (ind_min != 0)	// the population at the exit generation is not uniform (expect for small maxgen)
 					{
 						//-------------------debug TIME (1.15) DATE (130515)
 						std::cout << "debug 1.15 ind_min: " << ind_min << "\n";
