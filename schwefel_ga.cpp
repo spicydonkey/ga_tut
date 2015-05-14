@@ -1,5 +1,11 @@
-// Implementation of Genetic Algorithm to find the global minimum
-// of the Schwefel function
+//////////////////////////////////////////////////////////////////////
+// Implementation of Genetic Algorithm to find the global minimum	//
+// of the Schwefel function											//
+//																	//
+// Author:	David Shin												//
+// Date:	14/05/2015												//
+//////////////////////////////////////////////////////////////////////
+
 
 //////////////////////////////////////////////
 //DEBUG INFO
@@ -23,15 +29,19 @@ commands for debugging follow the format:
 #include <algorithm>
 
 // CONSTANTS
-#define POP_SIZE	40		// even
+#define POP_SIZE	50		// No. chromos in each generation (MUST be EVEN)
 #define RAN_NUM		((float)rand()/(RAND_MAX))		// a random number between 0 and 1
-#define MAX_GEN		30
-#define PROB_X		0.4		// crossover rate
-#define PROB_MUT	0.1	// mutation rate
+#define MAX_GEN		20
+#define PROB_X		0.5		// crossover rate
+#define PROB_MUT	0.1		// mutation rate
 #define EPSILON		1e-3	// precision of float in our case
-#define RUN			10000		// number of GA simulations run (until global min found)
+#define RUN			3	// number of GA simulations run (until global min found)
 #define DIM			2		// dimension of Schwefel function
-#define Nbin		100	// number of bins to store randomly generated numbers
+#define Nbin		100		// number of bins to store randomly generated numbers
+
+// SIMULATION FLAGS
+#define DETAIL		0		// 0: no member details | 1: all chroms and ftns at every gen (don't use if POP_SIZE is large)
+
 
 struct chrom_typ 
 {
@@ -53,18 +63,23 @@ void mutate (float* chromosome, int dim);
 // MAIN: GA implementation
 int main (void)
 {
+#if (POP_SIZE%2 != 0)
+	std::cout << "ERROR: POP_SIZE must be an even positive integer.\n";
+	return 1;
+#endif
 
-	////????????????????????????????????????
+	////DEBUG: check schwefel() function in "GATESTER.h"
 	//float mylist[] = {420.9687f,420.9687f};
 	//std::cout << schwefel(mylist,2);
 	//return 0;
-	////????????????????????????????????????
-
-	//// ask user for the Schwefel function dimension
-	//int dim;
-	//std::cout << "Enter the dimension please: ";
-	//std::cin >> dim;
 	////
+
+	// ask user for the Schwefel function dimension
+#ifndef DIM
+	int DIM;
+	std::cout << "Enter the dimension please: ";
+	std::cin >> DIM;
+#endif
 
 	// Seed the RNG outside run loop
 	std::srand((int)time(NULL));	
@@ -74,42 +89,26 @@ int main (void)
 	//int rand_bin[Nbin] = {0};	//initialise a zero-filled array as an array of bins for RNG
 	//float rand_resol = (float)(1.0f/Nbin);
 
-	//-------------------debug 9.29 130515
-	//RUN GA several times
-	// initialise the best chromosome from many simulations
-	int best_run;
-	chrom_typ best_chrom;
+	// RUN GA multiple times
+	int run = 0, best_run;
+	chrom_typ best_chrom;			// the best chromo (largest fitness) from all the GA runs
 	best_chrom.fitness = 0.0f;
 
-	int run = 0;
+
 	while (run<RUN)
 	{
+		std::cout << "----------------------------------------------------------------\n";
 		std::cout << "RUN# : " << run << "\n";
-		//-------------------<
-
-		//// seed the RNG
-		//std::srand((int)time(NULL));	
 	
-		//////////////////////
-		//// CRUCIAL TESTS
+		//// RNG TEST
 		//for (int i=0; i<200; i++)
 		//{
 		//	std::cout << RAN_NUM << ", ";
 		//}
-		//std::cout << (0.0f < 0.00004f) << "\n";
 		//return 0;
-		////
-		//////////////////////
 
 		// Initial population
 		chrom_typ pop_chrom[POP_SIZE];
-	
-		//// Create temporary storage for next generation's population
-		//chrom_typ tmp_pop[POP_SIZE];
-
-		////-------------------debug TIME (9.35) DATE (130515)
-		//std::cout << "DEBUG 9.37\n";
-		////-------------------
 
 		// index for ith chromosome, and ith gene
 		int i_chrom (0), i_param (0);
@@ -121,17 +120,12 @@ int main (void)
 		for (i_chrom=0; i_chrom<POP_SIZE; i_chrom++)
 		{
 			////DEBUG
-			////check if correctly initialised
-			//if (i_chrom%((int)(POP_SIZE/5)) == 0)	{if (pop_chrom[i_chrom].paramvect != nullptr) {std::cout << "ERROR\n";} }
+			////check if correctly initialised - paramvect should be a null pointer
+			//if (pop_chrom[i_chrom].paramvect != nullptr) {std::cout << "ERROR\n";}
 			////DEBUGEND
 
-			pop_chrom[i_chrom].paramvect = new (std::nothrow) float[DIM];
+			pop_chrom[i_chrom].paramvect = new (std::nothrow) float[DIM];	// allocate sufficient memory to paramvect
 			pop_chrom[i_chrom].fitness = 0.0f;
-
-			////-------------------debug TIME (9.35) DATE (130515)
-			//if (i_chrom%(POP_SIZE/5) == 0)
-			//	std::cout << "DEBUG 9.40\n";
-			////-------------------
 
 			// check for memory allocation failure
 			if (pop_chrom[i_chrom].paramvect == nullptr)
@@ -152,12 +146,8 @@ int main (void)
 				//// RANDOMNESS
 				//rand_bin[(int)(RAN_NUM/rand_resol)]++;		// increment the appropriate bin
 
-				////DEBUG
 				// check if the randomly assigned number does fall within [-500,500]
 				if (fabs(ran_gene) > 500.0f) {std::cout << "ERROR: RNG fail [-500,500]: " << ran_gene << "\n"; return 1;}
-
-				//if (i_chrom%((int)(POP_SIZE/5)) == 0)	{std::cout << pop_chrom[i_chrom].paramvect[i_param] << ", ";}
-				////DEBUGEND
 			}
 		}
 
@@ -169,10 +159,8 @@ int main (void)
 		//}
 		//std::cout << "\n";
 
-		////-------------------debug TIME (9.35) DATE (130515)
-		//std::cout << "DEBUG 9.41\n";
-		////------------------- (<, >: for begin, end)
 
+		// ITERATION
 		// Until max gen iteration is reached: assign fitness value to current population's chromosomes -> iterate (selection,crossover,mutation) to next generation
 		float tot_fitness;
 		bool isFound = false;
@@ -186,7 +174,7 @@ int main (void)
 			////-------------------
 
 			///////////////////////
-			//// DEBUG MAIN
+			//// DEBUG
 			//std::cout << "DEBUG POINT printChromo" << "\n";
 			//printChromo(pop_chrom[0], DIM);
 			////
@@ -239,12 +227,24 @@ int main (void)
 			//}
 			////-------------------
 
+			// detailed output of the population in each generation
+#if DETAIL == 1
+			// print all members & fitness every generation
+			std::cout << "================================\n";
+			std::cout << "Gen: " << gen << "\n";
+			//std::cout << "--------------------------------\n";
+			for (int i=0; i<POP_SIZE; i++)
+			{
+				printChromo(pop_chrom[i], DIM);
+			}
+#endif
 
 			if (isFound || (gen==MAX_GEN))
 			{
 
 				//-------------------debug TIME (9.51) DATE (130515)
-				std::cout << "DEBUG 9.53 EXIT GEN: " << gen << "\n";
+				std::cout << "================================================================\n";
+				std::cout << "EXIT GEN: " << gen << " / " << MAX_GEN << "\n";
 				//-------------------
 
 				// Global min found OR MAX iters reached! Stop iterating
@@ -391,8 +391,8 @@ int main (void)
 			////
 			///////////////////////
 
-			std::cout << MAX_GEN << " generations\t|\t";
 			printChromo(pop_chrom[ind_min], DIM);
+			std::cout << "\n";
 
 			// Check for fittest chromosome throughout simulation
 			if (maxFitness > best_chrom.fitness) 
@@ -416,9 +416,10 @@ int main (void)
 	//------------------->
 
 	// Display best chromosome from all the runs
-	std::cout << "\n\n-----------\n" << "Best run: " << best_run << "\n\n";
+	std::cout << "\n----------------------------------------------------------------\n";
+	std::cout << "Best run: " << best_run << "\n";
 	printChromo(best_chrom, DIM);
-
+	std::cout << "\n\n----------------------------------------------------------------\n";
 	return 0;
 }
 
@@ -473,7 +474,7 @@ void printChromo (chrom_typ obj_chromosome, int dim)
 	{
 		std::cout << obj_chromosome.paramvect[i] << ", ";
 	}
-	std::cout << ")\t|\t" << schwefel(obj_chromosome.paramvect,dim) << "\n";
+	std::cout << ")\t|\t" << obj_chromosome.fitness << "\t|\t" << schwefel(obj_chromosome.paramvect,dim) << "\n";
 
 }
 
