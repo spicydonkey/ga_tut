@@ -31,11 +31,11 @@ commands for debugging follow the format:
 // CONSTANTS
 #define POP_SIZE	100		// No. chromos in each generation (MUST be EVEN)
 #define RAN_NUM		((float)rand()/(RAND_MAX))		// a random number between 0 and 1
-#define MAX_GEN		100
+#define MAX_GEN		10000
 #define PROB_X		0.4		// crossover rate
 #define PROB_MUT	0.1		// mutation rate
-#define EPSILON		1e-3	// precision of float in our case
-#define RUN			100		// number of GA simulations run (until global min found)
+#define EPSILON		1e-5	// precision of float in our case
+#define RUN			1		// number of GA simulations run (until global min found)
 #define DIM			2		// dimension of Schwefel function
 #define Nbin		100		// number of bins to store randomly generated numbers
 
@@ -62,7 +62,7 @@ void crossover (float* chromo1, float* chromo2, int dim);
 void mutate (float* chromosome, int dim);
 float avgFitness (chrom_typ* POP_CHROMO, int dim);
 void copyChromo (const float* parent, float* daughter, int length);
-
+void printfl (float* ptr_fl, int length);
 
 // MAIN: GA implementation
 int main (void)
@@ -285,6 +285,11 @@ int main (void)
 			//
 			// Create temporary storage for next generation's population
 			chrom_typ tmp_pop[POP_SIZE];
+			// Allocate sufficient memory to each object in tmp_pop[]
+			for (int i=0; i<POP_SIZE; i++) 
+			{
+				tmp_pop[i].paramvect = new (std::nothrow) float[DIM];		// allocate sufficient memory to temporary population's members
+			}
 
 			////-------------------debug TIME (9.56) DATE (130515)
 			//std::cout << "DEBUG 9.56 init tmp_pop\n";
@@ -292,6 +297,8 @@ int main (void)
 
 			const float* ptr_chromo;				// const pointer to a chromosome
 			float *tmp_chrom1, *tmp_chrom2;			// temporary float-array chromosomes
+			
+			// tmp_chrom1 & tmp_chrom2 are const pointers 
 			tmp_chrom1 = new (std::nothrow) float[DIM];
 			tmp_chrom2 = new (std::nothrow) float[DIM];
 
@@ -300,6 +307,9 @@ int main (void)
 			int tmp_counter = 0;
 			while (tmp_counter < POP_SIZE)
 			{
+				/*tmp_chrom1 = new (std::nothrow) float[DIM];
+				tmp_chrom2 = new (std::nothrow) float[DIM];*/
+
 				// SELECTION
 				// Roulette selection of 2 parent chromosomes
 				// tmp_chrom1, tmp_chrom2 can be the same pointers!
@@ -318,40 +328,26 @@ int main (void)
 				tmp_chrom2 = Roul_sel(pop_chrom, tot_fitness);
 				*/
 
-#if OPERSHOW == 1
-				std::cout << "SELECTION\n";
-				//printch
-
-#endif
-
 
 				// CROSSOVER
 				crossover(tmp_chrom1, tmp_chrom2, DIM);
-
-#if OPERSHOW == 1
-				std::cout << "CROSSOVER\n";
-				//print details
-
-#endif
 
 
 				// MUTATION
 				mutate(tmp_chrom1, DIM);
 				mutate(tmp_chrom2, DIM);
 
-#if OPERSHOW == 1
-				std::cout << "MUTATION\n";
-				//details
-
-#endif
 
 				////-------------------debug TIME (10.03) DATE (130515)
 				//std::cout << "DEBUG 10.03 tmp_counter: " << tmp_counter << "\n";
 				////-------------------
 
 				// storage of genetically operated daughter chromosomes into the next gen population
-				tmp_pop[tmp_counter++] = chrom_typ(tmp_chrom1, 0.0f);
-				tmp_pop[tmp_counter++] = chrom_typ(tmp_chrom2, 0.0f);
+				copyChromo(tmp_chrom1, tmp_pop[tmp_counter++].paramvect, DIM);		// copy the temp stored daughter chromosome into the temp_pop's correct object's member
+				copyChromo(tmp_chrom2, tmp_pop[tmp_counter++].paramvect, DIM);
+
+				//tmp_pop[tmp_counter++] = chrom_typ(tmp_chrom1, 0.0f);	// tmp_pop[tmp_counter].paramvect assigned to point to tmp_chrom1
+				//tmp_pop[tmp_counter++] = chrom_typ(tmp_chrom2, 0.0f);
 
 			}
 
@@ -465,7 +461,8 @@ int main (void)
 	//------------------->
 
 	// Display best chromosome from all the runs
-	std::cout << "\n----------------------------------------------------------------\n";
+	std::cout << "\n----------------------------------------------------------------\n\n";
+	std::cout << "TOTAL NUMBER OF RUNS: " << RUN << "\n";
 	std::cout << "Best run: " << best_run << "\n";
 	printChromo(best_chrom, DIM);
 	std::cout << "\n\n----------------------------------------------------------------\n";
@@ -565,6 +562,14 @@ float* Roul_sel (chrom_typ* POP_CHROMO, float tot_ftns)
 		std::cout << "slice_ftns: " << slice_ftns << "\n";
 	}
 
+	
+	
+#if OPERSHOW == 1
+	// show selection behaviour
+	std::cout << "SELECTED: \n";
+	printChromo(POP_CHROMO[tmp_ind], DIM);
+#endif
+
 	return POP_CHROMO[tmp_ind].paramvect;
 }
 
@@ -584,7 +589,15 @@ void crossover (float *chromo1, float *chromo2, int dim)
 		std::cout << "ERROR: chromo2 NULL \n";
 		return;
 	}
-		
+	
+#if OPERSHOW == 1
+	// show crossover behaviour
+	std::cout << "CROSSOVER:\n";
+	printfl(chromo1,dim);
+	printfl(chromo2,dim);
+	std::cout << "-----------------------------\n";
+#endif
+
 	//float tmp_gene = 0.0f;
 	for (int i=0; i<dim; i++)
 	{
@@ -604,6 +617,13 @@ void crossover (float *chromo1, float *chromo2, int dim)
 
 		}
 	}
+
+#if OPERSHOW == 1
+	// show crossover behaviour
+	printfl(chromo1,dim);
+	printfl(chromo2,dim);
+#endif
+
 }
 
 
@@ -611,6 +631,14 @@ void crossover (float *chromo1, float *chromo2, int dim)
 // A simple mutation process that randomly reassigns genes of a chromosome
 void mutate (float *chromosome, int dim)
 {
+
+#if OPERSHOW == 1
+	// show mutation behaviour
+	std::cout << "MUTATION:\n";
+	printfl(chromosome, dim);
+	std::cout << "-----------------------------\n";
+#endif
+
 	for (int i=0; i<dim; i++)
 	{
 		// traverse through each gene and perform random reassignment at set rate
@@ -625,6 +653,12 @@ void mutate (float *chromosome, int dim)
 			chromosome[i] = (1000*RAN_NUM - 500);
 		}
 	}
+
+#if OPERSHOW == 1
+	// show mutation behaviour
+	printfl(chromosome, dim);
+#endif
+
 }
 
 
@@ -650,4 +684,16 @@ void copyChromo (const float* parent, float* daughter, int length)
 	{
 		daughter[i] = parent[i];
 	}
+}
+
+// printfl
+// prints an array of float ( <chrom_typ>.paramvect ) from given pointer and length
+void printfl (float* ptr_fl, int length)
+{
+	std::cout << "( ";
+	for (int i=0; i<length; i++)
+	{
+		std::cout << ptr_fl[i] << ", ";
+	}
+	std::cout << ")\n";
 }
