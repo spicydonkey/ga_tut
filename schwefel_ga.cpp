@@ -29,13 +29,13 @@ commands for debugging follow the format:
 #include <algorithm>
 
 // CONSTANTS
-#define POP_SIZE	50		// No. chromos in each generation (MUST be EVEN)
+#define POP_SIZE	4		// No. chromos in each generation (MUST be EVEN)
 #define RAN_NUM		((float)rand()/(RAND_MAX))		// a random number between 0 and 1
-#define MAX_GEN		20
-#define PROB_X		0.5		// crossover rate
+#define MAX_GEN		3
+#define PROB_X		0.4		// crossover rate
 #define PROB_MUT	0.1		// mutation rate
 #define EPSILON		1e-3	// precision of float in our case
-#define RUN			3	// number of GA simulations run (until global min found)
+#define RUN			10		// number of GA simulations run (until global min found)
 #define DIM			2		// dimension of Schwefel function
 #define Nbin		100		// number of bins to store randomly generated numbers
 
@@ -98,8 +98,8 @@ int main (void)
 	while (run<RUN)
 	{
 		std::cout << "----------------------------------------------------------------\n";
-		std::cout << "RUN# : " << run << "\n";
-	
+		std::cout << "RUN# : " << run << "\n";	
+
 		//// RNG TEST
 		//for (int i=0; i<200; i++)
 		//{
@@ -166,6 +166,14 @@ int main (void)
 		bool isFound = false;
 		int ind_globalmin;
 
+		// fittest chromosome in this run
+		int fittest_gen;
+
+		chrom_typ fittest_this_run;
+
+		fittest_this_run.fitness = 0.0f;
+		fittest_this_run.paramvect = new (std::nothrow) float[DIM];
+
 		// The iterative algorithm
 		while (true) 
 		{
@@ -180,23 +188,20 @@ int main (void)
 			////
 			///////////////////////
 
+			float tmp_ftns;
 			tot_fitness = 0.0f;		// reset total fitness sum to 0
-		
+			
 			for (i_chrom=0; i_chrom<POP_SIZE; i_chrom++) 
 			{
-				pop_chrom[i_chrom].fitness = GetFitness(pop_chrom[i_chrom].paramvect, DIM);		// call fitness function and assign it to the chromosome object
-			
-				////-------------------debug TIME (9.46) DATE (130515)
-				//if (i_chrom%(POP_SIZE/5) == 0)
-				//	std::cout << "DEBUG 9.46: " << pop_chrom[i_chrom].fitness << "\n";
-				////-------------------
+				tmp_ftns = GetFitness(pop_chrom[i_chrom].paramvect, DIM);		// call fitness function and store temporarily
+				pop_chrom[i_chrom].fitness = tmp_ftns;							// assign ftns to the chromosome object
 
 				// Check if global minimum (0) has been found!
 				if (floatEqual(pop_chrom[i_chrom].fitness, -1.0f))
 				{
 
 					//-------------------debug TIME (9.50) DATE (130515)
-					std::cout << "DEBUG 9.50: FOUND! \n";
+					std::cout << "DEBUG 9.50: Global minimum found! \n";
 					//-------------------
 
 					isFound = true;
@@ -204,7 +209,20 @@ int main (void)
 					break;
 				}
 
-				tot_fitness += pop_chrom[i_chrom].fitness;		// total sum of fitness
+				// update the fittest chromosome in this run
+				if (tmp_ftns > fittest_this_run.fitness) 
+				{
+					for (int i=0; i<DIM; i++) 
+					{
+						// copy the float array
+						fittest_this_run.paramvect[i] = pop_chrom[i_chrom].paramvect[i];
+					}
+
+					fittest_this_run.fitness = tmp_ftns;
+					fittest_gen = gen;
+				}
+
+				tot_fitness += tmp_ftns;		// total sum of fitness
 			}
 		
 			////-------------------debug TIME (9.51) DATE (130515)
@@ -391,6 +409,13 @@ int main (void)
 			////
 			///////////////////////
 
+			// display the fittest member from ths run (MAY NOT BE SURVIVING)
+			std::cout << "Fittest in this run from GEN <" << fittest_gen << ">:\n";
+			printChromo(fittest_this_run, DIM);
+			std::cout << "\n";
+
+			// display the fittest member from the latest generation
+			std::cout << "Fittest surviving: \n"; 
 			printChromo(pop_chrom[ind_min], DIM);
 			std::cout << "\n";
 
