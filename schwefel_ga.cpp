@@ -16,21 +16,25 @@
 #include <algorithm>
 
 // CONSTANTS
-#define POP_SIZE	1000	// No. chromos in each generation (MUST be EVEN)
+#define POP_SIZE	100		// No. chromos in each generation (MUST be EVEN)
 #define RAN_NUM		((float)rand()/(RAND_MAX))		// a random number between 0 and 1
-#define MAX_GEN		10000
+#define MAX_GEN		1000	// maximum number of generations to run
 #define PROB_X		0.4		// crossover rate
-#define PROB_MUT	0.05		// mutation rate
+#define PROB_MUT	0.1		// mutation rate
 #define EPSILON		1e-5	// precision of float in our case
 #define RUN			1		// number of GA simulations run (until global min found)
-#define DIM			20		// dimension of Schwefel function
+#define DIM			10		// dimension of Schwefel function
 #define Nbin		100		// number of bins to store randomly generated numbers
 
+// ALGORITHM METHODS
+#define FTNS_METHOD	1		// 1: 1/Schw	|	2: exp(-Schw) BUGGY ATM
+
 // SIMULATION FLAGS
-#define AVGSHOW		0		// 1: show average fitness of each generation	|	0: don't
+#define AVGSHOW		1		// 1: show average fitness of each generation	|	0: don't
 #define DETAIL		0		// 1: all chroms details at every gen			|	0: don't
 #define OPERSHOW	0		// 1: show genetic operation when it happens	|	0: don't
-#define FASTRUN		1		// 1: optimise the speed of algorithm (errs ignored)	|	0: don't
+#define FASTRUN		0		// 1: optimise the speed of algorithm (errs ignored)	|	0: don't
+
 
 // STRUCTURES
 struct chrom_typ 
@@ -53,6 +57,8 @@ void	mutate (float* chromosome, int dim);
 float	avgFitness (chrom_typ* POP_CHROMO, int dim);
 void	copyChromo (const float* parent, float* daughter, int length);
 void	printfl (float* ptr_fl, int length);
+
+
 
 // MAIN: GA implementation
 int main (void)
@@ -187,6 +193,8 @@ int main (void)
 				tmp_ftns = GetFitness(pop_chrom[i_chrom].paramvect, DIM);		// call fitness function and store temporarily
 				pop_chrom[i_chrom].fitness = tmp_ftns;							// assign ftns to the chromosome object
 
+
+#if FTNS_METHOD == 1
 				// Check if global minimum (0) has been found!
 				if (floatEqual(pop_chrom[i_chrom].fitness, -1.0f))
 				{
@@ -199,6 +207,7 @@ int main (void)
 					ind_globalmin = i_chrom;
 					break;
 				}
+#endif
 
 				// update the fittest chromosome in this run
 				if (tmp_ftns > fittest_this_run.fitness) 
@@ -348,7 +357,7 @@ int main (void)
 			// Dislay: maxgen ran, best approximation to globlal minimum and (...) the Schwefel fun value there
 
 			// Best approximation
-			int ind_min;
+			int ind_min = -1;		// initialise to -1. stays at this value if no improvements 
 			float maxFitness = 0.0f;
 			for (i_chrom=0; i_chrom<POP_SIZE; i_chrom++)
 			{
@@ -358,7 +367,7 @@ int main (void)
 					ind_min = i_chrom;
 
 #if FASTRUN == 0
-					if (ind_min != 0)	// the population at the exit generation is not uniform (expect for small maxgen)
+					if ((ind_min != 0) && (ind_min != -1))	// the population at the exit generation is not uniform (expect for small maxgen)
 					{
 						//-------------------debug TIME (1.15) DATE (130515)
 						std::cout << "update ind_min: " << ind_min << "\n";
@@ -375,10 +384,18 @@ int main (void)
 			printChromo(fittest_this_run, DIM);
 			std::cout << "\n";
 
-			// display the fittest member from the latest generation
-			std::cout << "Fittest surviving: \n"; 
-			printChromo(pop_chrom[ind_min], DIM);
-			std::cout << "\n";
+			if (ind_min != -1)
+			{
+				// display the fittest member from the latest generation
+				std::cout << "Fittest surviving: \n"; 
+				printChromo(pop_chrom[ind_min], DIM);
+				std::cout << "\n";
+			}
+			else
+			{
+				// ftns are too small
+				std::cout << "ERROR: fitnesses are too small to compare to 0\n";
+			}
 #endif
 
 			// Check for fittest chromosome throughout simulation
@@ -398,10 +415,11 @@ int main (void)
 
 	// SUMMARY OF SIMULATION
 	std::cout << "\n----------------------------------------------------------------\n\n";
-	std::cout << "|PARAMETERS|  POP: " << POP_SIZE << " | GEN: " << MAX_GEN << " | PC: " << PROB_X << " | PM: " << PROB_MUT << " | RUNS: " << RUN << "\n";
-	std::cout << "Best run: " << best_run << "\n";
+	std::cout << "SUMMARY\n\n";
+	std::cout << "DIM: " << DIM << " | POP: " << POP_SIZE << " | GEN: " << MAX_GEN << " | PC: " << PROB_X << " | PM: " << PROB_MUT << " | RUNS: " << RUN << "\n";
+	std::cout << "Best run: " << best_run << "\n\n";
 	printChromo(best_chrom, DIM);
-	std::cout << "\n\n----------------------------------------------------------------\n";
+	std::cout << "\n----------------------------------------------------------------\n";
 	return 0;
 }
 
@@ -426,6 +444,9 @@ float GetFitness (float* chromosome, int dim)
 	float fitness;
 	fitness = schwefel(chromosome, dim);	// this fitness we want to minimise
 
+#if FTNS_METHOD == 1
+	// Implement a 1/pos_num method to tfm a min prob into max-type GA
+	// Function's range must be NON-NEGATIVE!
 	if (!floatEqual(fitness, 0.0f))
 	{
 		fitness = ((float)1.0f/(schwefel(chromosome, dim)));	// this we maximise
@@ -435,6 +456,11 @@ float GetFitness (float* chromosome, int dim)
 		// we are at the global minimum - 0
 		fitness = -1.0f;
 	}
+#elif FTNS_METHOD == 2
+	// Implement a exp( - fun_val) method to tfm a min prob into max-type GA
+	fitness = exp((float)-1.0f*fitness);
+#endif
+
 
 	return fitness;
 }
