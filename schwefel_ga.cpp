@@ -16,18 +16,18 @@
 #include <algorithm>
 
 // CONSTANTS
-#define POP_SIZE	6		// No. chromos in each generation (MUST be EVEN)
+#define POP_SIZE	100		// No. chromos in each generation (MUST be EVEN)
 #define RAN_NUM		((float)rand()/(RAND_MAX))		// a random number between 0 and 1
-#define MAX_GEN		100
+#define MAX_GEN		1000
 #define PROB_X		0.4		// crossover rate
-#define PROB_MUT	0.1		// mutation rate
+#define PROB_MUT	0.01		// mutation rate
 #define EPSILON		1e-5	// precision of float in our case
 #define RUN			1		// number of GA simulations run (until global min found)
-#define DIM			2		// dimension of Schwefel function
+#define DIM			5		// dimension of Schwefel function
 #define Nbin		100		// number of bins to store randomly generated numbers
 
 // SIMULATION FLAGS
-#define AVGSHOW		1		// 1: show average fitness of each generation	|	0: don't
+#define AVGSHOW		0		// 1: show average fitness of each generation	|	0: don't
 #define DETAIL		0		// 1: all chroms details at every gen			|	0: don't
 #define OPERSHOW	0		// 1: show genetic operation when it happens	|	0: don't
 
