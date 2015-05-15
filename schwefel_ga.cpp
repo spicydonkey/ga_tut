@@ -16,20 +16,21 @@
 #include <algorithm>
 
 // CONSTANTS
-#define POP_SIZE	100		// No. chromos in each generation (MUST be EVEN)
+#define POP_SIZE	1000	// No. chromos in each generation (MUST be EVEN)
 #define RAN_NUM		((float)rand()/(RAND_MAX))		// a random number between 0 and 1
-#define MAX_GEN		1000
+#define MAX_GEN		10000
 #define PROB_X		0.4		// crossover rate
-#define PROB_MUT	0.01		// mutation rate
+#define PROB_MUT	0.05		// mutation rate
 #define EPSILON		1e-5	// precision of float in our case
 #define RUN			1		// number of GA simulations run (until global min found)
-#define DIM			5		// dimension of Schwefel function
+#define DIM			20		// dimension of Schwefel function
 #define Nbin		100		// number of bins to store randomly generated numbers
 
 // SIMULATION FLAGS
 #define AVGSHOW		0		// 1: show average fitness of each generation	|	0: don't
 #define DETAIL		0		// 1: all chroms details at every gen			|	0: don't
 #define OPERSHOW	0		// 1: show genetic operation when it happens	|	0: don't
+#define FASTRUN		1		// 1: optimise the speed of algorithm (errs ignored)	|	0: don't
 
 // STRUCTURES
 struct chrom_typ 
@@ -122,12 +123,15 @@ int main (void)
 			pop_chrom[i_chrom].paramvect = new (std::nothrow) float[DIM];	// allocate sufficient memory to paramvect
 			pop_chrom[i_chrom].fitness = 0.0f;
 
+
+#if FASTRUN == 0
 			// check for memory allocation failure
 			if (pop_chrom[i_chrom].paramvect == nullptr)
 			{
 				std::cout << "ERROR: could not allocate memory to pop_chrom[" << i_chrom << "].paramvect\n";
 				return 1;
 			}
+#endif
 
 			// memory allocation successful
 			// random initialisation of chromosomes
@@ -141,8 +145,10 @@ int main (void)
 				//// RANDOMNESS
 				//rand_bin[(int)(RAN_NUM/rand_resol)]++;		// increment the appropriate bin
 
+#if FASTRUN == 0
 				// check if the randomly assigned number does fall within [-500,500]
 				if (fabs(ran_gene) > 500.0f) {std::cout << "ERROR: RNG fail [-500,500]: " << ran_gene << "\n"; return 1;}
+#endif
 			}
 		}
 
@@ -229,18 +235,20 @@ int main (void)
 			std::cout << "gen <" << gen << ">  avg ftns: " << avgFitness(pop_chrom, DIM) << "\n";
 #endif
 
-			if (isFound || (gen==MAX_GEN))
+
+			if ((gen==MAX_GEN) || isFound)
 			{
 
+#if FASTRUN == 0
 				//-------------------debug TIME (9.51) DATE (130515)
 				std::cout << "================================================================\n";
 				std::cout << "EXIT GEN: " << gen << " / " << MAX_GEN << "\n";
 				//-------------------
+#endif
 
 				// Global min found OR MAX iters reached! Stop iterating
 				break;
 			}
-
 
 			//
 			// Global min not found AND MAX iters not reached... Iterate more!
@@ -253,12 +261,16 @@ int main (void)
 				// Allocate sufficient memory to each object in tmp_pop[]
 				tmp_pop[i].paramvect = new (std::nothrow) float[DIM];		// allocate sufficient memory to temporary population's members
 
+
+#if FASTRUN == 0
 				// check for memory allocation failure
 				if (tmp_pop[i].paramvect == nullptr)
 				{
 					std::cout << "ERROR: could not allocate memory to tmp_pop[" << i << "].paramvect\n";
 					return 1;
 				}
+#endif
+
 			}
 
 
@@ -345,16 +357,19 @@ int main (void)
 					maxFitness = pop_chrom[i_chrom].fitness;
 					ind_min = i_chrom;
 
+#if FASTRUN == 0
 					if (ind_min != 0)	// the population at the exit generation is not uniform (expect for small maxgen)
 					{
 						//-------------------debug TIME (1.15) DATE (130515)
 						std::cout << "update ind_min: " << ind_min << "\n";
 						//-------------------
 					}
+#endif
+
 				}
 			}
 		
-
+#if FASTRUN == 0
 			// display the fittest member from ths run (MAY NOT BE SURVIVING)
 			std::cout << "Fittest in this run from GEN <" << fittest_gen << ">:\n";
 			printChromo(fittest_this_run, DIM);
@@ -364,6 +379,7 @@ int main (void)
 			std::cout << "Fittest surviving: \n"; 
 			printChromo(pop_chrom[ind_min], DIM);
 			std::cout << "\n";
+#endif
 
 			// Check for fittest chromosome throughout simulation
 			if (maxFitness > best_chrom.fitness) 
@@ -380,9 +396,9 @@ int main (void)
 	}
 	//------------------->
 
-	// Display best chromosome from all the runs
+	// SUMMARY OF SIMULATION
 	std::cout << "\n----------------------------------------------------------------\n\n";
-	std::cout << "TOTAL NUMBER OF RUNS: " << RUN << "\n";
+	std::cout << "|PARAMETERS|  POP: " << POP_SIZE << " | GEN: " << MAX_GEN << " | PC: " << PROB_X << " | PM: " << PROB_MUT << " | RUNS: " << RUN << "\n";
 	std::cout << "Best run: " << best_run << "\n";
 	printChromo(best_chrom, DIM);
 	std::cout << "\n\n----------------------------------------------------------------\n";
@@ -455,6 +471,7 @@ float* Roul_sel (chrom_typ* POP_CHROMO, float tot_ftns)
 	////
 	///////////////////////
 
+#if FASTRUN == 0
 	if ((slice_ftns > tot_ftns)||(slice_ftns < 0.0f))
 	{
 		// output an ERROR message
@@ -462,6 +479,8 @@ float* Roul_sel (chrom_typ* POP_CHROMO, float tot_ftns)
 		std::cout << "ERROR: RNG failed to generate a number between 0 and 1.\n";
 		return POP_CHROMO[0].paramvect;		// an error output
 	}
+#endif
+
 
 	// check if the cum sum has exceeded the slice threshold
 	do 	
@@ -471,12 +490,14 @@ float* Roul_sel (chrom_typ* POP_CHROMO, float tot_ftns)
 	} while (cum_ftns < slice_ftns);
 	tmp_ind--;
 
+
+#if FASTRUN == 0
 	if ((tmp_ind < 0)||(tmp_ind>=POP_SIZE))
 	{
 		std::cout << "ERROR: tmp_ind (" << tmp_ind << ") not in range\n";
 		std::cout << "slice_ftns: " << slice_ftns << "\n";
 	}
-
+#endif
 	
 	
 #if OPERSHOW == 1
@@ -493,6 +514,8 @@ float* Roul_sel (chrom_typ* POP_CHROMO, float tot_ftns)
 // A simple crossover process for two chromosomes (array of floats) of length dim
 void crossover (float *chromo1, float *chromo2, int dim)
 {
+
+#if FASTRUN == 0
 	// Check if chromo1 and 2 are valid pointers
 	if (chromo1 == nullptr)
 	{
@@ -504,7 +527,8 @@ void crossover (float *chromo1, float *chromo2, int dim)
 		std::cout << "ERROR: chromo2 NULL \n";
 		return;
 	}
-	
+#endif
+
 #if OPERSHOW == 1
 	// show crossover behaviour
 	std::cout << "CROSSOVER:\n";
