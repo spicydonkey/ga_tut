@@ -16,21 +16,21 @@
 #include <algorithm>
 
 // CONSTANTS
-#define POP_SIZE	100		// No. chromos in each generation (MUST be EVEN)
+#define POP_SIZE	500		// No. chromos in each generation (MUST be EVEN)
 #define RAN_NUM		((float)rand()/(RAND_MAX))		// a random number between 0 and 1
-#define MAX_GEN		100
+#define MAX_GEN		1000	// maximum number of generations to run
 #define PROB_X		0.4		// crossover rate
 #define PROB_MUT	0.1		// mutation rate
-#define EPSILON		1e-5	// precision of float in our case
-#define RUN			1		// number of GA simulations run (until global min found)
-#define DIM			2		// dimension of Schwefel function
+#define EPSILON		1e-6	// precision of float in our case
+#define RUN			10		// number of GA simulations run (until global min found)
+#define DIM			10		// dimension of Schwefel function
 #define Nbin		100		// number of bins to store randomly generated numbers
 
 // ALGORITHM METHODS
-#define FTNS_METHOD	1		// 1: 1/Schw	|	2: exp(-Schw)
+#define FTNS_METHOD	2		// 1: 1/Schw	|	2: exp(-Schw)
 
 // SIMULATION FLAGS
-#define AVGSHOW		1		// 1: show average fitness of each generation	|	0: don't
+#define AVGSHOW		0		// 1: show average fitness of each generation	|	0: don't
 #define DETAIL		0		// 1: all chroms details at every gen			|	0: don't
 #define OPERSHOW	0		// 1: show genetic operation when it happens	|	0: don't
 #define FASTRUN		0		// 1: optimise the speed of algorithm (errs ignored)	|	0: don't
@@ -416,7 +416,7 @@ int main (void)
 	// SUMMARY OF SIMULATION
 	std::cout << "\n----------------------------------------------------------------\n\n";
 	std::cout << "SUMMARY\n\n";
-	std::cout << "DIM: " << DIM << " | POP: " << POP_SIZE << " | GEN: " << MAX_GEN << " | PC: " << PROB_X << " | PM: " << PROB_MUT << " | RUNS: " << RUN << "\n";
+	std::cout << "DIM: " << DIM << " | POP: " << POP_SIZE << " | GEN: " << MAX_GEN << " | PC: " << PROB_X << " | PM: " << PROB_MUT << " | RUNS: " << RUN << " | FIT: " << FTNS_METHOD << "\n";
 	std::cout << "Best run: " << best_run << "\n\n";
 	printChromo(best_chrom, DIM);
 	std::cout << "\n----------------------------------------------------------------\n";
@@ -458,7 +458,7 @@ float GetFitness (float* chromosome, int dim)
 	}
 #elif FTNS_METHOD == 2
 	// Implement a exp( - fun_val) method to tfm a min prob into max-type GA
-	fitness = exp((float)-1.0f*fitness);
+	fitness = exp((float)-1.0f*fitness/100.0f);
 #endif
 
 
