@@ -458,7 +458,7 @@ float GetFitness (float* chromosome, int dim)
 	}
 #elif FTNS_METHOD == 2
 	// Implement a exp( - fun_val) method to tfm a min prob into max-type GA
-	fitness = exp((float)-1.0f*fitness/100.0f);
+	fitness = exp((float)-1.0f*fitness/100.0f);		// scale the Schwefel value before exponentiating to avoid 0.0f issues
 #endif
 
 
