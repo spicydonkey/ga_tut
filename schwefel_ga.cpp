@@ -16,21 +16,24 @@
 #include <algorithm>
 
 // CONSTANTS
-#define POP_SIZE	100		// No. chromos in each generation (MUST be EVEN)
+#define POP_SIZE	100			// No. chromos in each generation (MUST be EVEN)
 #define RAN_NUM		((float)rand()/(RAND_MAX))		// a random number between 0 and 1
-#define MAX_GEN		1000	// maximum number of generations to run
-#define PROB_X		0.4		// crossover rate
-#define PROB_MUT	0.1		// mutation rate
-#define EPSILON		1e-5	// precision of float in our case
-#define RUN			1		// number of GA simulations run (until global min found)
-#define DIM			10		// dimension of Schwefel function
-#define Nbin		100		// number of bins to store randomly generated numbers
+#define MAX_GEN		1000		// maximum number of generations to run
+#define PROB_X		0.4			// crossover rate
+#define PROB_MUT	0.2			// mutation rate
+#define EPSILON		1e-6		// precision of float in our case
+#define RUN			1			// number of GA simulations run (until global min found)
+#define DIM			4			// dimension of Schwefel function
+#define Nbin		100			// number of bins to store randomly generated numbers
 
 // ALGORITHM METHODS
-#define FTNS_METHOD	1		// 1: 1/Schw	|	2: exp(-Schw) BUGGY ATM
+#define FTNS_METHOD	1		// 1: 1/Schw	|	2: exp(-Schw)
+
+#define MUTATE		1		// 1: DO mutation	| 0: don't
+#define XOVER		1		// 1: DO crossover	| 0: don't
 
 // SIMULATION FLAGS
-#define AVGSHOW		1		// 1: show average fitness of each generation	|	0: don't
+#define AVGSHOW		0		// 1: show average fitness of each generation	|	0: don't
 #define DETAIL		0		// 1: all chroms details at every gen			|	0: don't
 #define OPERSHOW	0		// 1: show genetic operation when it happens	|	0: don't
 #define FASTRUN		0		// 1: optimise the speed of algorithm (errs ignored)	|	0: don't
@@ -58,6 +61,8 @@ float	avgFitness (chrom_typ* POP_CHROMO, int dim);
 void	copyChromo (const float* parent, float* daughter, int length);
 void	printfl (float* ptr_fl, int length);
 
+
+void	Mutate (chrom_typ* POP, int pop_size, int dim);		// Mutation operator acts on an array of chromos (population)
 
 
 // MAIN: GA implementation
@@ -306,18 +311,14 @@ int main (void)
 				ptr_chromo = Roul_sel(pop_chrom, tot_fitness);		// select another parent chromosome
 				copyChromo(ptr_chromo, tmp_chrom2, DIM);
 
-				
+#if XOVER == 1
 				// CROSSOVER
 				crossover(tmp_chrom1, tmp_chrom2, DIM);
+#endif
 
-
-				// MUTATION
-				mutate(tmp_chrom1, DIM);
-				mutate(tmp_chrom2, DIM);
-
-				////-------------------debug TIME (10.03) DATE (130515)
-				//std::cout << "DEBUG 10.03 tmp_counter: " << tmp_counter << "\n";
-				////-------------------
+				//// MUTATION
+				//mutate(tmp_chrom1, DIM);
+				//mutate(tmp_chrom2, DIM);
 
 				// storage of genetically operated daughter chromosomes into the next gen population
 				copyChromo(tmp_chrom1, tmp_pop[tmp_counter++].paramvect, DIM);		// copy the temp stored daughter chromosome into the temp_pop's correct object's member
@@ -336,6 +337,11 @@ int main (void)
 				//tmp_pop[i].paramvect = new (std::nothrow) float[DIM];		// allocation
 				delete [] tmp_pop[i].paramvect;
 			}
+
+#if MUTATE == 1
+			// Run the mutation operator on the population
+			Mutate(pop_chrom, POP_SIZE, DIM);
+#endif
 
 			gen++;
 		}
@@ -416,7 +422,7 @@ int main (void)
 	// SUMMARY OF SIMULATION
 	std::cout << "\n----------------------------------------------------------------\n\n";
 	std::cout << "SUMMARY\n\n";
-	std::cout << "DIM: " << DIM << " | POP: " << POP_SIZE << " | GEN: " << MAX_GEN << " | PC: " << PROB_X << " | PM: " << PROB_MUT << " | RUNS: " << RUN << "\n";
+	std::cout << "DIM: " << DIM << " | POP: " << POP_SIZE << " | GEN: " << MAX_GEN << " | PC: " << PROB_X << " | PM: " << PROB_MUT << " | RUNS: " << RUN << " | FIT: " << FTNS_METHOD << "\n";
 	std::cout << "Best run: " << best_run << "\n\n";
 	printChromo(best_chrom, DIM);
 	std::cout << "\n----------------------------------------------------------------\n";
@@ -458,7 +464,7 @@ float GetFitness (float* chromosome, int dim)
 	}
 #elif FTNS_METHOD == 2
 	// Implement a exp( - fun_val) method to tfm a min prob into max-type GA
-	fitness = exp((float)-1.0f*fitness);
+	fitness = exp((float)-1.0f*fitness/100.0f);		// scale the Schwefel value before exponentiating to avoid 0.0f issues
 #endif
 
 
@@ -612,6 +618,38 @@ void mutate (float *chromosome, int dim)
 	printfl(chromosome, dim);
 #endif
 
+}
+
+
+// Mutate
+// Mutation operator acts on an array of chromo_typ and reassigns a gene's value with a RNG
+void Mutate (chrom_typ* POP, int pop_size, int dim)
+{
+#if OPERSHOW == 1
+	// show mutation behaviour
+	std::cout << "MUTATION:\n";
+	std::cout << "-----------------------------\n";
+#endif
+	for (int i=0; i<pop_size; i++)
+	{
+#if OPERSHOW == 1
+	printfl(POP[i].paramvect, dim);
+#endif
+		for (int j=0; j<dim; j++)
+		{
+			if (RAN_NUM < PROB_MUT)
+			{
+				POP[i].paramvect[j] = (1000*RAN_NUM - 500);
+			}
+		}
+#if OPERSHOW == 1
+	printfl(POP[i].paramvect, dim);
+	std::cout << "-----------------------------\n";
+#endif
+	}
+#if OPERSHOW == 1
+	std::cout << "=============================\n";
+#endif
 }
 
 
