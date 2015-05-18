@@ -56,13 +56,10 @@ float	GetFitness (float* chromosome, int dim);
 void	printChromo (chrom_typ obj_chromosome, int dim);
 float*	Roul_sel (chrom_typ* POP_CHROMO, float tot_ftns);
 void	crossover (float* chromo1, float* chromo2, int dim);
-void	mutate (float* chromosome, int dim);
+void	Mutate (chrom_typ* POP, int pop_size, int dim);
 float	avgFitness (chrom_typ* POP_CHROMO, int dim);
 void	copyChromo (const float* parent, float* daughter, int length);
 void	printfl (float* ptr_fl, int length);
-
-
-void	Mutate (chrom_typ* POP, int pop_size, int dim);		// Mutation operator acts on an array of chromos (population)
 
 
 // MAIN: GA implementation
@@ -315,10 +312,6 @@ int main (void)
 				// CROSSOVER
 				crossover(tmp_chrom1, tmp_chrom2, DIM);
 #endif
-
-				//// MUTATION
-				//mutate(tmp_chrom1, DIM);
-				//mutate(tmp_chrom2, DIM);
 
 				// storage of genetically operated daughter chromosomes into the next gen population
 				copyChromo(tmp_chrom1, tmp_pop[tmp_counter++].paramvect, DIM);		// copy the temp stored daughter chromosome into the temp_pop's correct object's member
@@ -587,35 +580,6 @@ void crossover (float *chromo1, float *chromo2, int dim)
 	// show crossover behaviour
 	printfl(chromo1,dim);
 	printfl(chromo2,dim);
-#endif
-
-}
-
-
-// mutate
-// A simple mutation process that randomly reassigns genes of a chromosome
-void mutate (float *chromosome, int dim)
-{
-
-#if OPERSHOW == 1
-	// show mutation behaviour
-	std::cout << "MUTATION:\n";
-	printfl(chromosome, dim);
-	std::cout << "-----------------------------\n";
-#endif
-
-	for (int i=0; i<dim; i++)
-	{
-		// traverse through each gene and perform random reassignment at set rate
-		if (RAN_NUM < PROB_MUT)
-		{
-			chromosome[i] = (1000*RAN_NUM - 500);
-		}
-	}
-
-#if OPERSHOW == 1
-	// show mutation behaviour
-	printfl(chromosome, dim);
 #endif
 
 }
